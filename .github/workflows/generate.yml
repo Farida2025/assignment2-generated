@@ -16,27 +16,38 @@ jobs:
 
       - name: Install Tools and Generate Code
         run: |
-
+     
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
-         
+          
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-          
+        
           export PATH=$PATH:$(go env GOPATH)/bin
           
+      
           git clone https://github.com/Farida2025/assignment2-protos.git proto-repo
           
-          mkdir -p order payment
+       
+    
           protoc --proto_path=proto-repo/proto \
-            --go_out=. --go_opt=paths=source_relative \
-            --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+            --go_out=. --go_opt=module=github.com/Farida2025/assignment2-generated \
+            --go-grpc_out=. --go-grpc_opt=module=github.com/Farida2025/assignment2-generated \
             proto-repo/proto/*.proto
 
       - name: Push Generated Code
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
+          
+      
+          rm -rf proto-repo
+          
           git add .
-
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate gRPC code" && git push origin main)
+ 
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Auto-generate gRPC code"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
